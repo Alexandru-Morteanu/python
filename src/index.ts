@@ -84,7 +84,7 @@ process.on("exit", () => {
   }
 });
 
-const port = 8088;
+const port = 5000;
 httpServer.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
