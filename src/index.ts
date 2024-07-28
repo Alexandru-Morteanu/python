@@ -89,9 +89,10 @@ process.on("exit", () => {
 });
 
 // Use PORT environment variable or default to 8088
-const port = process.env.PORT || 8088;
+const port: number = parseInt(process.env.PORT as string, 10) || 8088;
 
-httpServer.listen(port, () => {
+// Ensure the type of hostname is correct and check for `0.0.0.0` handling
+httpServer.listen(port, "0.0.0.0", () => {
   console.log(`Server listening on port ${port}`);
 });
 
