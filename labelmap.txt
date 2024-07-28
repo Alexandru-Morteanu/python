@@ -1,0 +1,2 @@
+telecom_alb
+telecom_negru

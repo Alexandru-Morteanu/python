@@ -1,10 +1,11 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
 import Elysia from "elysia";
-import { spawn } from "child_process";
+import { spawn, ChildProcess } from "child_process";
 import path from "path";
 
 const app = new Elysia();
+//@ts-ignore
 const httpServer = createServer(app); // Create HTTP server with Elysia app
 
 const io = new Server(httpServer, {
@@ -14,36 +15,38 @@ const io = new Server(httpServer, {
   },
 });
 
-let pythonProcess;
-const frameQueue = [];
+let pythonProcess: ChildProcess | null = null;
+const frameQueue: string[][] = [];
 let processing = false;
 
-function startPythonProcess() {
-  const pythonScript = path.resolve(
-    "/Users/morteanualexandru/Desktop/pinbin/backend/py.py"
-  );
+function startPythonProcess(): void {
+  const pythonScript = path.resolve("py.py");
   pythonProcess = spawn("python3", [pythonScript]);
 
   console.log("Started Python process");
 
-  pythonProcess.on("close", (code) => {
+  pythonProcess.on("close", (code: number) => {
     console.log("Python script process exited with code", code);
     pythonProcess = null;
   });
 
-  pythonProcess.stdout.on("data", (data) => {
-    console.log("Python process output:", data.toString());
-    io.emit("detection", data.toString());
-    processing = false; // Reset processing state after receiving data
-    processNextFrame(); // Process the next frame in the queue
-  });
+  if (pythonProcess.stdout) {
+    pythonProcess.stdout.on("data", (data: Buffer) => {
+      console.log("Python process output:", data.toString());
+      io.emit("detection", data.toString());
+      processing = false; // Reset processing state after receiving data
+      processNextFrame(); // Process the next frame in the queue
+    });
+  }
 
-  pythonProcess.stderr.on("data", (data) => {
-    console.error("Python error output:", data.toString());
-  });
+  if (pythonProcess.stderr) {
+    pythonProcess.stderr.on("data", (data: Buffer) => {
+      console.error("Python error output:", data.toString());
+    });
+  }
 }
 
-function processNextFrame() {
+function processNextFrame(): void {
   if (frameQueue.length === 0 || !pythonProcess) {
     processing = false;
     return;
@@ -52,17 +55,19 @@ function processNextFrame() {
   if (!processing) {
     processing = true;
 
-    const frameData = frameQueue.shift();
+    const frameData = frameQueue.shift() as string[];
     const dataToSend = frameData.join(",");
     // Send data to the Python process with a newline character
-    pythonProcess.stdin.write(dataToSend + "\n"); // Ensure newline for end of input
+    if (pythonProcess.stdin) {
+      pythonProcess.stdin.write(dataToSend + "\n"); // Ensure newline for end of input
+    }
   }
 }
 
 io.on("connection", (socket) => {
   console.log("Client connected");
 
-  socket.on("frame", (frameData) => {
+  socket.on("frame", (frameData: string[]) => {
     console.log("Received frame data");
     frameQueue.push(frameData);
     processNextFrame(); // Try to process the next frame
