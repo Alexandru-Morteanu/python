@@ -3,11 +3,15 @@ import { Server } from "socket.io";
 import Elysia from "elysia";
 import { spawn, ChildProcess } from "child_process";
 import path from "path";
+import dotenv from "dotenv";
 
+// Create an instance of Elysia and an HTTP server
 const app = new Elysia();
-//@ts-ignore
-const httpServer = createServer(app); // Create HTTP server with Elysia app
+// @ts-ignore
+const httpServer = createServer(app);
+dotenv.config();
 
+// Create a Socket.io server
 const io = new Server(httpServer, {
   cors: {
     origin: "*",
@@ -84,7 +88,9 @@ process.on("exit", () => {
   }
 });
 
-const port = 5000;
+// Use PORT environment variable or default to 8088
+const port = process.env.PORT || 8088;
+
 httpServer.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });

@@ -24,8 +24,8 @@ RUN /bin/bash -c "source /app/venv/bin/activate && pip install --no-cache-dir te
 # Install Bun dependencies
 RUN bun install
 
-# Expose port 8088
-EXPOSE 5000
+# Expose the port that the app will run on
+EXPOSE 8088
 
 # Command to run your application
-CMD ["/bin/bash", "-c", "source /app/venv/bin/activate && python3 py.py && bun src/index.ts"]
+CMD ["/bin/bash", "-c", "source /app/venv/bin/activate && bun src/index.ts"]
